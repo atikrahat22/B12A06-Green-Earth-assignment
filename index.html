@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Green Earth — Landing Page</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@2.51.5/dist/full.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-base-100 text-base-content">
+    <div class="drawer drawer-end">
+      <input id="cartDrawerToggle" type="checkbox" class="drawer-toggle" />
+      <div class="drawer-content">
+        <header class="sticky top-0 z-50 bg-[#15803d] text-[#ffffff]">
+          <div class="max-w-6xl mx-auto px-4 md:px-8">
+            <div class="flex items-center justify-between h-16">
+              <div class="flex items-center gap-3">
+                <a class="text-xl font-bold flex items-center gap-2">
+                  <span class="text-green-600">🌱</span>
+                  <span>Green Earth</span>
+                </a>
+              </div>
+              <nav class="hidden md:flex space-x-6">
+                <a href="#about" class="hover:underline">About</a>
+                <a href="#Gallery" class="hover:underline">Gallery</a>
+                <a href="#plant" class="hover:underline">Plant a Tree</a>
+              </nav>
+              <div class="flex items-center gap-3">
+                <button id="plantBtn" class="custom-plant-btn">
+                  Plant a Tree
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="hero-section text-center">
+          <div
+            class="hero-content max-w-6xl mx-auto px-4 py-12 md:py-20 relative z-10"
+          >
+            <h1
+              class="text-4xl md:text-5xl font-extrabold text-green-800 leading-tight"
+            >
+              Plant a Tree, Grow a Future
+            </h1>
+            <p class="mt-4 text-lg text-gray-700 max-w-3xl mx-auto">
+              Join our mission to plant 1 million trees and make the Earth
+              greener for future generations.
+            </p>
+            <div class="mt-6 flex justify-center">
+              <button id="ctaHero" class="custom-plant-btn">
+                Get Involved
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <section class="py-10 bg-[#dcfce7] text-black">
+          <div class="flex items-center justify-center mb-10 mt-3">
+            <h2 class="text-3xl font-bold">Choose Your Trees</h2>
+          </div>
+
+          <div
+            class="max-w-full mx-auto px-10 pl-[90px] grid lg:grid-cols-5 gap-6"
+          >
+            <aside class="lg:col-span-1">
+              <div class="card p-3">
+                <h3 class="font-bold mb-3">Categories</h3>
+                <div id="categories" class="flex flex-col gap-2"></div>
+                <div id="catSpinner" class="mt-4 hidden">
+                  <div class="loading loading-dots"></div>
+                </div>
+              </div>
+            </aside>
+
+            <div id="Gallery" class="lg:col-span-3 relative">
+              <div
+                id="animatedLogo"
+                class="hidden flex items-center justify-center mb-4"
+              >
+                <span class="loader"></span>
+              </div>
+
+              <div
+                id="productsGrid"
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              ></div>
+              <div id="productsSpinner" class="spinner-overlay hidden">
+                <div>
+                  <div class="loading loading-bars text-primary"></div>
+                  <div class="text-center mt-2">Loading...</div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="lg:col-span-1 pr-[90px]">
+              <div class="card p-3 bg-[#ffffff] sha">
+                <h4 class="text-xl font-bold mb-3">Your Cart</h4>
+                <div
+                  id="cartContents"
+                  class="space-y-3 overflow-y-auto"
+                  style="max-height: 40vh"
+                ></div>
+                <div
+                  class="mt-4 flex justify-between items-center border-t pt-3"
+                >
+                  <div class="font-bold">Total:</div>
+                  <div id="cartTotal" class="font-bold text-lg">৳0</div>
+                </div>
+                <button id="checkoutBtn" class="btn btn-primary w-full mt-3">
+                  Checkout
+                </button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="about" class="bg-[#dcfce7]  py-12">
+            <h3 class="text-3xl text-center text-black font-bold pb-[50px]">About the Campaign</h3>
+          <div
+            class="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-6 items-center"
+          >
+            <div>
+              <img
+                src="assets/about.png"
+                alt="about"
+                class="rounded-lg object-cover w-full h-full "
+              />
+            </div>
+            <div class="">
+              
+              <p class="mt-4 text-muted">
+                Green Earth is a global tree plantation initiative dedicated to
+                fighting climate change. Since our start, we’ve planted over
+                500,000 trees worldwide. By joining our campaign, you help
+                restore forests, create habitats for wildlife, and combat global
+                warming.
+              </p>
+              <ul class="mt-4 space-y-2">
+                <li>
+                  ● Restoration of natural 
+                  
+                </li>
+                <li>●habitats Improvement of air quality</li>
+                <li>● Support for local communities</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+          <div class="max-full mx-auto px-4 bg-[#cff0dc]">
+            <h3 class="text-3xl font-bold text-center pt-[80px] text-[#000000]">Our Impact</h3>
+           
+            <div class="mt-8 grid ml-[100px] mr-[100px] pb-[100px] sm:grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="card p-6 bg-[#ffffff] shadow">
+                <h4 class="text-4xl font-extrabold text-[#166534]">500K+</h4>
+               
+                <p class="text-sm text-muted mt-2">Trees Planted</p>
+              </div>
+              <div class="card p-6 bg-[#ffffff] shadow">
+                <h4 class="text-4xl font-extrabold text-[#166534]">120+</h4>
+               
+                <p class="text-sm text-muted mt-2">Communities Involved </p>
+              </div>
+              <div class="card p-6 bg-[#ffffff] shadow">
+                <h4 class="text-4xl font-extrabold text-[#166534]">30+ </h4>
+               
+                <p class="text-sm text-muted mt-2"> Countries Reached</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+       <section id="plant" class="bg-[#1e5c3e] py-12">
+    <div class="max-w-3xl mx-auto px-4">
+        <h3 class="text-2xl font-bold text-center text-white">Plant a Tree Today</h3>
+        <form id="plantForm" class="card p-6 mt-6 bg-[#387c5b] shadow-xl">
+            <div class="space-y-4">
+                <input
+                    name="name"
+                    type="text"
+                    placeholder="Your Name"
+                    class="input w-full bg-white text-black placeholder:text-gray-500"
+                    required
+                />
+                <input
+                    name="email"
+                    type="email"
+                    placeholder="Your Email Address"
+                    class="input w-full bg-white text-black placeholder:text-gray-500"
+                    required
+                />
+                <select name="count" class="select select-bordered w-full bg-white text-black">
+                    <option disabled selected>Number of Trees</option>
+                    <option>1</option>
+                    <option>5</option>
+                    <option>10</option>
+                    <option>20</option>
+                </select>
+            </div>
+            <div class="mt-8">
+                <button class="btn w-full bg-[#fddc49] border-none text-[#5c3e03] hover:bg-[#ffeb84]">Donate Now</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<footer class="bg-[#1e5c3e] border-t-2 border-t-[#387c5b] py-6">
+    <div class="max-w-6xl mx-auto px-4 text-center text-sm text-white">
+        © 2025 Green Earth. All Rights Reserved.
+    </div>
+</footer>
+
+      <div class="drawer-side hidden md:hidden">
+        <label for="cartDrawerToggle" class="drawer-overlay"></label>
+        <div class="w-80 bg-base-100 p-4">
+          <h4 class="text-xl font-bold mb-2">🛒 Cart</h4>
+          <div
+            id="cartContentsDrawer"
+            class="space-y-3 overflow-y-auto"
+            style="max-height: 60vh"
+          ></div>
+          <div class="mt-4">
+            <div class="flex justify-between">
+              <div class="font-medium">Total:</div>
+              <div id="cartTotalDrawer" class="font-bold">৳0</div>
+            </div>
+            <div class="mt-3 flex gap-2">
+              <button id="checkoutBtnDrawer" class="btn btn-primary w-full">
+                Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+      <div class="modal-box max-w-3xl">
+        <h3 id="detailTitle" class="font-bold text-lg"></h3>
+        <p id="detailDesc" class="py-4 text-sm text-muted"></p>
+        <div id="detailImage" class="mb-4"></div>
+        <div class="modal-action">
+          <button id="detailClose" class="btn">Close</button>
+          <button id="detailAdd" class="btn btn-primary">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
