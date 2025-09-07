@@ -168,3 +168,16 @@
     color: white;
     
 }
+
+
+/* Your existing styles */
+
+.btn-primary {
+    background-color: #006106;
+    color: white; 
+}
+
+
+.btn-primary:hover {
+    background-color: #005005;
+}
