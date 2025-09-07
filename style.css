@@ -26,9 +26,9 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 20%;
+    width: 30%;
     background-image: url('assets/hero-leaf2.png');
-    background-size: cover;
+    background-size: 600px;
     background-repeat: no-repeat;
     background-position: center bottom;
     z-index: 0;
