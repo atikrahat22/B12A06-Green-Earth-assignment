@@ -1,5 +1,3 @@
-
-
 // -------------------- CONFIG & SELECTORS --------------------
 const API_BASE = 'https://openapi.programming-hero.com/api';
 
@@ -56,7 +54,7 @@ function currency(n) { return `৳${Number(n).toFixed(2)}`; }
 
 // -------------------- API FETCHERS --------------------
 async function safeJson(res) {
-    try { return await res.json(); } 
+    try { return await res.json(); }
     catch (e) { console.error("JSON parsing error:", e); return null; }
 }
 
@@ -93,16 +91,28 @@ async function fetchAllPlants() {
 
 async function fetchPlantsByCategory(id) {
     currentCategoryId = id;
+
     const btns = selectors.categories.querySelectorAll('button');
     btns.forEach(b => {
-        if (b.dataset.id === String(id)) {
-            b.classList.add('btn-primary'); b.classList.remove('btn-ghost');
-        } else { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); }
+        if ((id === null || id === 'all') && b.dataset.id === 'all') {
+            b.classList.add('btn-primary');
+            b.classList.remove('btn-ghost');
+        } else if (b.dataset.id === String(id)) {
+            b.classList.add('btn-primary');
+            b.classList.remove('btn-ghost');
+        } else {
+            b.classList.remove('btn-primary');
+            b.classList.add('btn-ghost');
+        }
     });
+
+    // We keep these spinners for initial category loading
     show(selectors.animatedLogo);
     show(selectors.productsSpinner);
+
     try {
-        const res = await fetch(`${API_BASE}/category/${id}`);
+        let url = id === null || id === 'all' ? `${API_BASE}/plants` : `${API_BASE}/category/${id}`;
+        const res = await fetch(url);
         const json = await safeJson(res);
         let arr = (json && (json.data || json.plants || json.data?.data || json));
         if (!Array.isArray(arr)) arr = [];
@@ -111,7 +121,10 @@ async function fetchPlantsByCategory(id) {
     } catch (err) {
         console.error('category failed', err);
         selectors.productsGrid.innerHTML = '<div class="text-sm text-red-500">ডেটা লোড করা যায়নি</div>';
-    } finally { hide(selectors.productsSpinner); hide(selectors.animatedLogo); }
+    } finally {
+        hide(selectors.productsSpinner);
+        hide(selectors.animatedLogo);
+    }
 }
 
 async function fetchPlantDetail(id) {
@@ -129,16 +142,9 @@ function renderCategoryButtons(arr) {
     selectors.categories.innerHTML = '';
     const allBtn = document.createElement('button');
     allBtn.textContent = 'All';
-    allBtn.className = 'btn btn-ghost justify-start';
+    allBtn.className = 'btn btn-primary justify-start';
     allBtn.dataset.id = 'all';
-    allBtn.addEventListener('click', () => {
-        currentCategoryId = null;
-        selectors.categories.querySelectorAll('button').forEach(b => {
-            b.classList.remove('btn-primary'); b.classList.add('btn-ghost');
-        });
-        allBtn.classList.add('btn-primary'); allBtn.classList.remove('btn-ghost');
-        fetchAllPlants();
-    });
+    allBtn.addEventListener('click', () => fetchPlantsByCategory('all'));
     selectors.categories.appendChild(allBtn);
 
     for (const c of arr) {
@@ -151,7 +157,6 @@ function renderCategoryButtons(arr) {
         btn.addEventListener('click', () => fetchPlantsByCategory(btn.dataset.id));
         selectors.categories.appendChild(btn);
     }
-    allBtn.classList.add('btn-primary'); allBtn.classList.remove('btn-ghost');
 }
 
 function renderProducts(arr) {
@@ -182,31 +187,14 @@ function renderProducts(arr) {
                 <div class="flex items-center justify-between mt-3">
                     <span class="badge badge-success px-3 py-1 text-sm">${category}</span> <span class="font-bold text-lg">${currency(price)}</span>
                 </div>
-                <button class="btn btn-primary w-full mt-4 add-to-cart" data-id="${id}" data-name="${name}" data-price="${price}">Add to Cart</button>
+                <button class="btn bg-[#006106] hover:bg-[#005005] text-white px-[20px] py-[12px] h-[43px] rounded-full mt-4 add-to-cart" data-id="${id}" data-name="${name}" data-price="${price}">Add to Cart</button>
             </div>
         `;
         selectors.productsGrid.appendChild(card);
     }
 
     selectors.productsGrid.querySelectorAll('.add-to-cart').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const loadingDiv = document.createElement('span');
-            loadingDiv.className = 'loader-tiny';
-            btn.disabled = true;
-            btn.innerHTML = '';
-            btn.appendChild(loadingDiv);
-
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const id = btn.dataset.id;
-            const name = btn.dataset.name;
-            const price = Number(btn.dataset.price || 0);
-            addToCart({ id, name, price, qty: 1 });
-
-            btn.disabled = false;
-            btn.textContent = 'Add to Cart';
-        });
+        btn.addEventListener('click', (e) => handleAddToCartClick(e, btn));
     });
 }
 
@@ -264,7 +252,7 @@ function addToCart(item) {
     if (idx >= 0) cart[idx].qty += item.qty;
     else cart.push({ ...item, qty: 1 });
     updateCartUI();
-    alert(`${item.name} has been added to your cart.`);
+    // No alert here, the animation indicates success
 }
 
 function removeFromCart(id) {
@@ -327,9 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectors.plantForm.reset();
     });
 
-    
     selectors.checkoutBtn.addEventListener('click', () => handleCheckout(selectors.cartTotal));
-   
     selectors.checkoutBtnDrawer?.addEventListener('click', () => handleCheckout(selectors.cartTotalDrawer, true));
 
 
@@ -345,23 +331,83 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// -------------------- CHECKOUT FUNCTION --------------------
+// -------------------- CHECKOUT & ADD TO CART FUNCTIONS --------------------
 function handleCheckout(cartTotalEl, isDrawer = false) {
-    if (cart.length === 0) { alert('Cart is empty'); return; }
+    if (cart.length === 0) {
+        alert('Cart is empty');
+        return;
+    }
 
-    const heroSection = document.querySelector('.hero-section');
-    if (!heroSection) return;
+    const plantSection = document.getElementById('plant');
+    if (!plantSection) {
+        console.error("Choose Your Trees section (id='plant') not found for animation target.");
+        return;
+    }
 
-   
-    const loaderDiv = selectors.animatedLogo.cloneNode(true);
-    loaderDiv.classList.remove('hidden');
-    heroSection.after(loaderDiv);
+    // Clone the animatedLogo for the page-level animation
+    const pageLoaderDiv = selectors.animatedLogo.cloneNode(true);
+    pageLoaderDiv.classList.remove('hidden');
+    // Position it absolutely within its container or fixed to cover more area
+    pageLoaderDiv.classList.add('fixed', 'inset-0', 'bg-transparent', 'z-50', 'flex', 'justify-center', 'items-center');
+
+    // Insert the page-level loader *before* the plantSection
+    plantSection.before(pageLoaderDiv);
 
     setTimeout(() => {
         alert('Checkout demo: total ' + cartTotalEl.textContent);
         cart = [];
         updateCartUI();
         if (isDrawer && selectors.cartDrawerToggle) selectors.cartDrawerToggle.checked = false;
-        loaderDiv.remove();
+        pageLoaderDiv.remove(); // Remove the page-level loader
     }, 1500);
+}
+
+function handleAddToCartClick(e, btn) {
+    e.preventDefault();
+
+    const plantSection = document.getElementById('plant');
+    let pageLoaderDiv = null;
+
+    if (plantSection) {
+        pageLoaderDiv = selectors.animatedLogo.cloneNode(true);
+        pageLoaderDiv.classList.remove('hidden');
+        pageLoaderDiv.classList.add('fixed', 'inset-0', 'bg-transparent', 'z-50', 'flex', 'justify-center', 'items-center');
+        plantSection.before(pageLoaderDiv);
+    }
+
+    // Button-specific loader
+    const buttonLoaderDiv = selectors.animatedLogo.cloneNode(true);
+    buttonLoaderDiv.classList.remove('hidden');
+    // For button loader, we want it to be absolute within the button, so remove 'fixed' and 'inset-0'
+    buttonLoaderDiv.classList.add('absolute', 'bg-transparent', 'pointer-events-none', 'flex', 'justify-center', 'items-center'); // Ensure it centers within the button
+
+    const originalBtnContent = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '';
+    btn.style.position = 'relative'; // Ensure the button is a positioning context for absolute loader
+    btn.appendChild(buttonLoaderDiv);
+
+    // Set size for the button loader to match button (or adjust as needed)
+    buttonLoaderDiv.style.width = '100%';
+    buttonLoaderDiv.style.height = '100%';
+    buttonLoaderDiv.style.top = '0';
+    buttonLoaderDiv.style.left = '0';
+
+
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    const price = Number(btn.dataset.price || 0);
+
+    setTimeout(() => {
+        addToCart({ id, name, price, qty: 1 });
+        btn.disabled = false;
+        btn.innerHTML = originalBtnContent; 
+        buttonLoaderDiv.remove(); 
+
+        if (pageLoaderDiv) {
+            pageLoaderDiv.remove(); 
+        }
+        alert(`${name} has been added to your cart.`); 
+    }, 1500); 
 }
