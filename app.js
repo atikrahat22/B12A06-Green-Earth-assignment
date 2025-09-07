@@ -1,0 +1,367 @@
+
+
+// -------------------- CONFIG & SELECTORS --------------------
+const API_BASE = 'https://openapi.programming-hero.com/api';
+
+const selectors = {
+    categories: document.getElementById('categories'),
+    catSpinner: document.getElementById('catSpinner'),
+    productsGrid: document.getElementById('productsGrid'),
+    productsSpinner: document.getElementById('productsSpinner'),
+    cartContents: document.getElementById('cartContents'),
+    cartTotal: document.getElementById('cartTotal'),
+    detailModal: document.getElementById('detailModal'),
+    detailTitle: document.getElementById('detailTitle'),
+    detailDesc: document.getElementById('detailDesc'),
+    detailImage: document.getElementById('detailImage'),
+    detailClose: document.getElementById('detailClose'),
+    detailAdd: document.getElementById('detailAdd'),
+    plantForm: document.getElementById('plantForm'),
+    cartDrawerToggle: document.getElementById('cartDrawerToggle'),
+    animatedLogo: document.getElementById('animatedLogo'),
+    cartContentsDrawer: document.getElementById('cartContentsDrawer'),
+    cartTotalDrawer: document.getElementById('cartTotalDrawer'),
+    checkoutBtn: document.getElementById('checkoutBtn'),
+    checkoutBtnDrawer: document.getElementById('checkoutBtnDrawer')
+};
+
+// -------------------- STATE --------------------
+let categories = [];
+let products = [];
+let currentCategoryId = null;
+let cart = JSON.parse(localStorage.getItem('ge_cart') || '[]');
+updateCartUI();
+
+// -------------------- UTILITY FUNCTIONS --------------------
+function qsa(sel) { return document.querySelectorAll(sel); }
+function show(el) { el && el.classList.remove('hidden'); }
+function hide(el) { el && el.classList.add('hidden'); }
+
+function getField(obj, keys) {
+    if (!obj) return null;
+    for (const k of keys) {
+        if (obj[k] !== undefined && obj[k] !== null && obj[k] !== '') return obj[k];
+    }
+    return null;
+}
+
+function computeFallbackPrice(id) {
+    const s = String(id || '');
+    let sum = 0;
+    for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
+    return ((sum % 80) + 20).toFixed(2);
+}
+
+function currency(n) { return `৳${Number(n).toFixed(2)}`; }
+
+// -------------------- API FETCHERS --------------------
+async function safeJson(res) {
+    try { return await res.json(); } 
+    catch (e) { console.error("JSON parsing error:", e); return null; }
+}
+
+async function fetchCategories() {
+    selectors.categories.innerHTML = '';
+    show(selectors.catSpinner);
+    try {
+        const res = await fetch(`${API_BASE}/categories`);
+        const json = await safeJson(res);
+        let arr = (json && (json.data || json.categories || json.data?.data || json));
+        if (!Array.isArray(arr)) arr = [];
+        categories = arr;
+        renderCategoryButtons(categories);
+    } catch (err) {
+        console.error('categories failed', err);
+        selectors.categories.innerHTML = '<div class="text-sm text-red-500">ক্যাটেগরি লোড করা যায়নি</div>';
+    } finally { hide(selectors.catSpinner); }
+}
+
+async function fetchAllPlants() {
+    show(selectors.productsSpinner);
+    try {
+        const res = await fetch(`${API_BASE}/plants`);
+        const json = await safeJson(res);
+        let arr = (json && (json.data || json.plants || json.data?.data || json));
+        if (!Array.isArray(arr)) arr = [];
+        products = arr;
+        renderProducts(products);
+    } catch (err) {
+        console.error('plants failed', err);
+        selectors.productsGrid.innerHTML = '<div class="text-sm text-red-500">ডেটা লোড করা যায়নি</div>';
+    } finally { hide(selectors.productsSpinner); }
+}
+
+async function fetchPlantsByCategory(id) {
+    currentCategoryId = id;
+    const btns = selectors.categories.querySelectorAll('button');
+    btns.forEach(b => {
+        if (b.dataset.id === String(id)) {
+            b.classList.add('btn-primary'); b.classList.remove('btn-ghost');
+        } else { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); }
+    });
+    show(selectors.animatedLogo);
+    show(selectors.productsSpinner);
+    try {
+        const res = await fetch(`${API_BASE}/category/${id}`);
+        const json = await safeJson(res);
+        let arr = (json && (json.data || json.plants || json.data?.data || json));
+        if (!Array.isArray(arr)) arr = [];
+        products = arr;
+        renderProducts(products);
+    } catch (err) {
+        console.error('category failed', err);
+        selectors.productsGrid.innerHTML = '<div class="text-sm text-red-500">ডেটা লোড করা যায়নি</div>';
+    } finally { hide(selectors.productsSpinner); hide(selectors.animatedLogo); }
+}
+
+async function fetchPlantDetail(id) {
+    try {
+        const res = await fetch(`${API_BASE}/plant/${id}`);
+        const json = await safeJson(res);
+        let detail = json && (json.data || json.plant || json.data?.data || json);
+        if (Array.isArray(detail) && detail.length) detail = detail[0];
+        return detail || null;
+    } catch (e) { console.error('detail err', e); return null; }
+}
+
+// -------------------- RENDER FUNCTIONS --------------------
+function renderCategoryButtons(arr) {
+    selectors.categories.innerHTML = '';
+    const allBtn = document.createElement('button');
+    allBtn.textContent = 'All';
+    allBtn.className = 'btn btn-ghost justify-start';
+    allBtn.dataset.id = 'all';
+    allBtn.addEventListener('click', () => {
+        currentCategoryId = null;
+        selectors.categories.querySelectorAll('button').forEach(b => {
+            b.classList.remove('btn-primary'); b.classList.add('btn-ghost');
+        });
+        allBtn.classList.add('btn-primary'); allBtn.classList.remove('btn-ghost');
+        fetchAllPlants();
+    });
+    selectors.categories.appendChild(allBtn);
+
+    for (const c of arr) {
+        const id = getField(c, ['id', '_id', 'category_id', 'categoryId']) || (c ? (c.id || c._id) : null);
+        const name = getField(c, ['name', 'category_name', 'category']) || c || 'Unknown';
+        const btn = document.createElement('button');
+        btn.textContent = name;
+        btn.className = 'btn btn-ghost justify-start';
+        btn.dataset.id = String(id || name);
+        btn.addEventListener('click', () => fetchPlantsByCategory(btn.dataset.id));
+        selectors.categories.appendChild(btn);
+    }
+    allBtn.classList.add('btn-primary'); allBtn.classList.remove('btn-ghost');
+}
+
+function renderProducts(arr) {
+    selectors.productsGrid.innerHTML = '';
+    if (!arr || arr.length === 0) {
+        selectors.productsGrid.innerHTML = '<div class="text-center text-muted"> plant cant be found </div>';
+        return;
+    }
+
+    for (const p of arr) {
+        const id = getField(p, ['id', '_id', 'plant_id']) || '';
+        const name = getField(p, ['name', 'plant_name', 'common_name']) || 'Unnamed Tree';
+        const image = getField(p, ['image', 'image_url', 'img', 'thumbnail']) || 'https://via.placeholder.com/150x100?text=Tree+Image';
+        const desc = getField(p, ['short_description', 'short_desc', 'description', 'details']) || 'A fast-growing tropical tree.';
+        const category = getField(p, ['category_name', 'category', 'cat']) || 'Fruit Tree';
+        const priceRaw = getField(p, ['price', 'cost', 'amount']) || null;
+        const price = priceRaw ? Number(priceRaw) : Number(computeFallbackPrice(id));
+
+        const card = document.createElement('div');
+        card.className = 'card bg-white hover:shadow-lg transition card-no-border';
+        card.innerHTML = `
+            <figure class="h-48 overflow-hidden flex items-center justify-center bg-white p-4">
+                <img src="${image}" alt="${name}" class="object-cover h-full w-full rounded" />
+            </figure>
+            <div class="card-body p-4 pt-0">
+                <h3 class="font-bold text-lg leading-tight mt-2">${name}</h3>
+                <p class="text-sm text-gray-600 line-clamp-2">${desc}</p>
+                <div class="flex items-center justify-between mt-3">
+                    <span class="badge badge-success px-3 py-1 text-sm">${category}</span> <span class="font-bold text-lg">${currency(price)}</span>
+                </div>
+                <button class="btn btn-primary w-full mt-4 add-to-cart" data-id="${id}" data-name="${name}" data-price="${price}">Add to Cart</button>
+            </div>
+        `;
+        selectors.productsGrid.appendChild(card);
+    }
+
+    selectors.productsGrid.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const loadingDiv = document.createElement('span');
+            loadingDiv.className = 'loader-tiny';
+            btn.disabled = true;
+            btn.innerHTML = '';
+            btn.appendChild(loadingDiv);
+
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+            const price = Number(btn.dataset.price || 0);
+            addToCart({ id, name, price, qty: 1 });
+
+            btn.disabled = false;
+            btn.textContent = 'Add to Cart';
+        });
+    });
+}
+
+// -------------------- CART FUNCTIONS --------------------
+function saveCart() { localStorage.setItem('ge_cart', JSON.stringify(cart)); }
+
+function updateCartUI() {
+    selectors.cartContents.innerHTML = '';
+    if(selectors.cartContentsDrawer) selectors.cartContentsDrawer.innerHTML = '';
+
+    if (cart.length === 0) {
+        const emptyMessage = '<div class="text-sm text-gray-500 text-center">Your cart is empty.</div>';
+        selectors.cartContents.innerHTML = emptyMessage;
+        selectors.cartTotal.textContent = currency(0);
+        if(selectors.cartContentsDrawer) selectors.cartContentsDrawer.innerHTML = emptyMessage;
+        if(selectors.cartTotalDrawer) selectors.cartTotalDrawer.textContent = currency(0);
+        saveCart(); return;
+    }
+
+    let total = 0;
+    cart.forEach(item => {
+        const rowHTML = `
+            <div class="flex items-center justify-between gap-2 py-2 border-b border-gray-200 bg-green-100 rounded px-2">
+                <div class="flex-grow ">
+                    <div class="font-medium text-sm">${item.name}</div>
+                    <div class="text-xs text-gray-500">${currency(item.price)} x ${item.qty}</div>
+                </div>
+                <div class="text-right">
+                    <button class="btn btn-ghost btn-xs remove-item" data-id="${item.id}">❌</button>
+                </div>
+            </div>
+        `;
+        selectors.cartContents.insertAdjacentHTML('beforeend', rowHTML);
+        if(selectors.cartContentsDrawer) selectors.cartContentsDrawer.insertAdjacentHTML('beforeend', rowHTML);
+        total += item.price * item.qty;
+    });
+
+    selectors.cartTotal.textContent = currency(total);
+    if(selectors.cartTotalDrawer) selectors.cartTotalDrawer.textContent = currency(total);
+
+    selectors.cartContents.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+    });
+    if(selectors.cartContentsDrawer) {
+        selectors.cartContentsDrawer.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', () => removeFromCart(btn.dataset.id));
+        });
+    }
+
+    saveCart();
+}
+
+function addToCart(item) {
+    const idx = cart.findIndex(c => String(c.id) === String(item.id));
+    if (idx >= 0) cart[idx].qty += item.qty;
+    else cart.push({ ...item, qty: 1 });
+    updateCartUI();
+    alert(`${item.name} has been added to your cart.`);
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(i => String(i.id) !== String(id));
+    updateCartUI();
+    alert('Item has been removed from your cart.');
+}
+
+// -------------------- MODAL & FORM --------------------
+let lastDetail = null;
+async function openDetailModal(id) {
+    show(selectors.productsSpinner);
+    const detail = await fetchPlantDetail(id);
+    hide(selectors.productsSpinner);
+    lastDetail = detail;
+
+    const name = getField(detail, ['name', 'plant_name', 'common_name']) || 'Tree Detail';
+    const desc = getField(detail, ['description', 'details', 'about']) || 'No details available.';
+    const img = getField(detail, ['image', 'image_url', 'img']) || 'assets/about.png';
+    const priceRaw = getField(detail, ['price', 'cost']) || null;
+    const price = priceRaw ? Number(priceRaw) : Number(computeFallbackPrice(id));
+
+    selectors.detailTitle.textContent = name;
+    selectors.detailDesc.textContent = desc;
+    selectors.detailImage.innerHTML = `<img src="${img}" alt="${name}" class="w-full h-48 object-contain rounded" />`;
+    selectors.detailAdd.dataset.id = id;
+    selectors.detailAdd.dataset.name = name;
+    selectors.detailAdd.dataset.price = price;
+    selectors.detailModal.classList.add('modal-open');
+}
+
+selectors.detailClose.addEventListener('click', () => selectors.detailModal.classList.remove('modal-open'));
+selectors.detailAdd.addEventListener('click', (e) => {
+    const id = e.target.dataset.id;
+    const name = e.target.dataset.name;
+    const price = Number(e.target.dataset.price || 0);
+    addToCart({ id, name, price, qty: 1 });
+    selectors.detailModal.classList.remove('modal-open');
+});
+
+// -------------------- INITIALIZATION --------------------
+document.addEventListener('DOMContentLoaded', () => {
+    fetchCategories();
+    fetchAllPlants();
+
+    document.getElementById('plantBtn')?.addEventListener('click', () => {
+        document.getElementById('plant')?.scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('ctaHero')?.addEventListener('click', () => {
+        document.getElementById('plant')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    selectors.plantForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(selectors.plantForm);
+        const name = fd.get('name');
+        const email = fd.get('email');
+        const count = fd.get('count') || 1;
+        alert(`${name} — Thank you! Your request to plant ${count} trees has been recorded.`);
+        selectors.plantForm.reset();
+    });
+
+    
+    selectors.checkoutBtn.addEventListener('click', () => handleCheckout(selectors.cartTotal));
+   
+    selectors.checkoutBtnDrawer?.addEventListener('click', () => handleCheckout(selectors.cartTotalDrawer, true));
+
+
+    document.querySelectorAll('[data-target]').forEach(el => {
+        const target = +el.dataset.target;
+        let cur = 0;
+        const step = Math.max(1, Math.floor(target / 80));
+        const t = setInterval(() => {
+            cur += step;
+            if (cur >= target) { el.textContent = target + (target > 999 ? '+' : ''); clearInterval(t); }
+            else el.textContent = cur;
+        }, 15);
+    });
+});
+
+// -------------------- CHECKOUT FUNCTION --------------------
+function handleCheckout(cartTotalEl, isDrawer = false) {
+    if (cart.length === 0) { alert('Cart is empty'); return; }
+
+    const heroSection = document.querySelector('.hero-section');
+    if (!heroSection) return;
+
+   
+    const loaderDiv = selectors.animatedLogo.cloneNode(true);
+    loaderDiv.classList.remove('hidden');
+    heroSection.after(loaderDiv);
+
+    setTimeout(() => {
+        alert('Checkout demo: total ' + cartTotalEl.textContent);
+        cart = [];
+        updateCartUI();
+        if (isDrawer && selectors.cartDrawerToggle) selectors.cartDrawerToggle.checked = false;
+        loaderDiv.remove();
+    }, 1500);
+}
