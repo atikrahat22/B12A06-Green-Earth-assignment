@@ -20,7 +20,7 @@ const selectors = {
     cartContentsDrawer: document.getElementById('cartContentsDrawer'),
     cartTotalDrawer: document.getElementById('cartTotalDrawer'),
     checkoutBtn: document.getElementById('checkoutBtn'),
-    checkoutBtnDrawer: document.getElementById('checkoutBtnDrawer')
+    checkoutBtnDrawer: document.getElementById('checkoutBtnDrawer'),
 };
 
 // -------------------- STATE --------------------
@@ -106,7 +106,6 @@ async function fetchPlantsByCategory(id) {
         }
     });
 
-    // We keep these spinners for initial category loading
     show(selectors.animatedLogo);
     show(selectors.productsSpinner);
 
@@ -252,7 +251,7 @@ function addToCart(item) {
     if (idx >= 0) cart[idx].qty += item.qty;
     else cart.push({ ...item, qty: 1 });
     updateCartUI();
-    // No alert here, the animation indicates success
+    
 }
 
 function removeFromCart(id) {
@@ -338,62 +337,45 @@ function handleCheckout(cartTotalEl, isDrawer = false) {
         return;
     }
 
-    const plantSection = document.getElementById('plant');
-    if (!plantSection) {
-        console.error("Choose Your Trees section (id='plant') not found for animation target.");
-        return;
-    }
-
-    // Clone the animatedLogo for the page-level animation
     const pageLoaderDiv = selectors.animatedLogo.cloneNode(true);
     pageLoaderDiv.classList.remove('hidden');
-    // Position it absolutely within its container or fixed to cover more area
     pageLoaderDiv.classList.add('fixed', 'inset-0', 'bg-transparent', 'z-50', 'flex', 'justify-center', 'items-center');
 
-    // Insert the page-level loader *before* the plantSection
-    plantSection.before(pageLoaderDiv);
+    document.body.appendChild(pageLoaderDiv);
 
     setTimeout(() => {
         alert('Checkout demo: total ' + cartTotalEl.textContent);
         cart = [];
         updateCartUI();
         if (isDrawer && selectors.cartDrawerToggle) selectors.cartDrawerToggle.checked = false;
-        pageLoaderDiv.remove(); // Remove the page-level loader
+        pageLoaderDiv.remove();
     }, 1500);
 }
 
 function handleAddToCartClick(e, btn) {
     e.preventDefault();
 
-    const plantSection = document.getElementById('plant');
-    let pageLoaderDiv = null;
+    const pageLoaderDiv = selectors.animatedLogo.cloneNode(true);
+    pageLoaderDiv.classList.remove('hidden');
+    pageLoaderDiv.classList.add('fixed', 'inset-0', 'bg-transparent', 'z-50', 'flex', 'justify-center', 'items-center');
 
-    if (plantSection) {
-        pageLoaderDiv = selectors.animatedLogo.cloneNode(true);
-        pageLoaderDiv.classList.remove('hidden');
-        pageLoaderDiv.classList.add('fixed', 'inset-0', 'bg-transparent', 'z-50', 'flex', 'justify-center', 'items-center');
-        plantSection.before(pageLoaderDiv);
-    }
+    document.body.appendChild(pageLoaderDiv);
 
-    // Button-specific loader
     const buttonLoaderDiv = selectors.animatedLogo.cloneNode(true);
     buttonLoaderDiv.classList.remove('hidden');
-    // For button loader, we want it to be absolute within the button, so remove 'fixed' and 'inset-0'
-    buttonLoaderDiv.classList.add('absolute', 'bg-transparent', 'pointer-events-none', 'flex', 'justify-center', 'items-center'); // Ensure it centers within the button
+    buttonLoaderDiv.classList.add('absolute', 'bg-transparent', 'pointer-events-none', 'flex', 'justify-center', 'items-center');
 
     const originalBtnContent = btn.innerHTML;
 
     btn.disabled = true;
     btn.innerHTML = '';
-    btn.style.position = 'relative'; // Ensure the button is a positioning context for absolute loader
+    btn.style.position = 'relative';
     btn.appendChild(buttonLoaderDiv);
 
-    // Set size for the button loader to match button (or adjust as needed)
     buttonLoaderDiv.style.width = '100%';
     buttonLoaderDiv.style.height = '100%';
     buttonLoaderDiv.style.top = '0';
     buttonLoaderDiv.style.left = '0';
-
 
     const id = btn.dataset.id;
     const name = btn.dataset.name;
@@ -402,12 +384,9 @@ function handleAddToCartClick(e, btn) {
     setTimeout(() => {
         addToCart({ id, name, price, qty: 1 });
         btn.disabled = false;
-        btn.innerHTML = originalBtnContent; 
-        buttonLoaderDiv.remove(); 
-
-        if (pageLoaderDiv) {
-            pageLoaderDiv.remove(); 
-        }
-        alert(`${name} has been added to your cart.`); 
-    }, 1500); 
+        btn.innerHTML = originalBtnContent;
+        buttonLoaderDiv.remove();
+        pageLoaderDiv.remove();
+        alert(`${name} has been added to your cart.`);
+    }, 1500);
 }
