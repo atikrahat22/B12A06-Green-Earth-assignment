@@ -9,6 +9,7 @@ const selectors = {
     cartContents: document.getElementById('cartContents'),
     cartTotal: document.getElementById('cartTotal'),
     detailModal: document.getElementById('detailModal'),
+     detailPrice: document.getElementById('detailPrice'),
     detailTitle: document.getElementById('detailTitle'),
     detailDesc: document.getElementById('detailDesc'),
     detailImage: document.getElementById('detailImage'),
@@ -51,6 +52,10 @@ function computeFallbackPrice(id) {
 }
 
 function currency(n) { return `৳${Number(n).toFixed(2)}`; }
+
+function getPlantDetailById(id) {
+    return products.find(p => String(getField(p, ['id', '_id', 'plant_id'])) === String(id)) || null;
+}
 
 // -------------------- API FETCHERS --------------------
 async function safeJson(res) {
@@ -126,16 +131,6 @@ async function fetchPlantsByCategory(id) {
     }
 }
 
-async function fetchPlantDetail(id) {
-    try {
-        const res = await fetch(`${API_BASE}/plant/${id}`);
-        const json = await safeJson(res);
-        let detail = json && (json.data || json.plant || json.data?.data || json);
-        if (Array.isArray(detail) && detail.length) detail = detail[0];
-        return detail || null;
-    } catch (e) { console.error('detail err', e); return null; }
-}
-
 // -------------------- RENDER FUNCTIONS --------------------
 function renderCategoryButtons(arr) {
     selectors.categories.innerHTML = '';
@@ -175,7 +170,7 @@ function renderProducts(arr) {
         const price = priceRaw ? Number(priceRaw) : Number(computeFallbackPrice(id));
 
         const card = document.createElement('div');
-        card.className = 'card bg-white hover:shadow-lg transition card-no-border';
+        card.className = 'card bg-white hover:shadow-lg transition cursor-pointer card-no-border';
         card.innerHTML = `
             <figure class="h-48 overflow-hidden flex items-center justify-center bg-white p-4">
                 <img src="${image}" alt="${name}" class="object-cover h-full w-full rounded" />
@@ -189,6 +184,14 @@ function renderProducts(arr) {
                 <button class="btn bg-[#006106] hover:bg-[#005005] text-white px-[20px] py-[12px] h-[43px] rounded-full mt-4 add-to-cart" data-id="${id}" data-name="${name}" data-price="${price}">Add to Cart</button>
             </div>
         `;
+
+        card.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart')) {
+                return;
+            }
+            openDetailModal(id);
+        });
+
         selectors.productsGrid.appendChild(card);
     }
 
@@ -262,24 +265,29 @@ function removeFromCart(id) {
 
 // -------------------- MODAL & FORM --------------------
 let lastDetail = null;
-async function openDetailModal(id) {
-    show(selectors.productsSpinner);
-    const detail = await fetchPlantDetail(id);
-    hide(selectors.productsSpinner);
+function openDetailModal(id) {
+    const detail = getPlantDetailById(id);
     lastDetail = detail;
+
+    if (!detail) {
+        alert('Details for this plant could not be loaded.');
+        return;
+    }
 
     const name = getField(detail, ['name', 'plant_name', 'common_name']) || 'Tree Detail';
     const desc = getField(detail, ['description', 'details', 'about']) || 'No details available.';
-    const img = getField(detail, ['image', 'image_url', 'img']) || 'assets/about.png';
+    const img = getField(detail, ['image', 'image_url', 'img']) || 'https://via.placeholder.com/150x100?text=Tree+Image';
     const priceRaw = getField(detail, ['price', 'cost']) || null;
     const price = priceRaw ? Number(priceRaw) : Number(computeFallbackPrice(id));
 
     selectors.detailTitle.textContent = name;
     selectors.detailDesc.textContent = desc;
-    selectors.detailImage.innerHTML = `<img src="${img}" alt="${name}" class="w-full h-48 object-contain rounded" />`;
+    selectors.detailImage.innerHTML = `<img src="${img}" alt="${name}" class="w-full h-[400px] object-cover rounded" />`;
+    selectors.detailPrice.textContent = currency(price);
     selectors.detailAdd.dataset.id = id;
     selectors.detailAdd.dataset.name = name;
     selectors.detailAdd.dataset.price = price;
+
     selectors.detailModal.classList.add('modal-open');
 }
 
@@ -316,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectors.checkoutBtn.addEventListener('click', () => handleCheckout(selectors.cartTotal));
     selectors.checkoutBtnDrawer?.addEventListener('click', () => handleCheckout(selectors.cartTotalDrawer, true));
-
 
     document.querySelectorAll('[data-target]').forEach(el => {
         const target = +el.dataset.target;
