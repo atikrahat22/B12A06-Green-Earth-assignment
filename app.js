@@ -9,8 +9,10 @@ const selectors = {
     cartContents: document.getElementById('cartContents'),
     cartTotal: document.getElementById('cartTotal'),
     detailModal: document.getElementById('detailModal'),
-     detailPrice: document.getElementById('detailPrice'),
+    detailPrice: document.getElementById('detailPrice'),
     detailTitle: document.getElementById('detailTitle'),
+    detailType: document.getElementById('detailType'),
+    detailCategory: document.getElementById('detailCategory'),
     detailDesc: document.getElementById('detailDesc'),
     detailImage: document.getElementById('detailImage'),
     detailClose: document.getElementById('detailClose'),
@@ -275,14 +277,18 @@ function openDetailModal(id) {
     }
 
     const name = getField(detail, ['name', 'plant_name', 'common_name']) || 'Tree Detail';
+    const category = getField(detail, ['category_name', 'category', 'cat']) || 'General';
     const desc = getField(detail, ['description', 'details', 'about']) || 'No details available.';
     const img = getField(detail, ['image', 'image_url', 'img']) || 'https://via.placeholder.com/150x100?text=Tree+Image';
     const priceRaw = getField(detail, ['price', 'cost']) || null;
     const price = priceRaw ? Number(priceRaw) : Number(computeFallbackPrice(id));
 
-    selectors.detailTitle.textContent = name;
+    selectors.detailTitle.textContent = "Tree Details";
+    selectors.detailType.textContent = name;
+    selectors.detailCategory.textContent = `Category: ${category}`;
     selectors.detailDesc.textContent = desc;
-    selectors.detailImage.innerHTML = `<img src="${img}" alt="${name}" class="w-full h-[400px] object-cover rounded" />`;
+    // Removed the fixed height to make it responsive
+    selectors.detailImage.innerHTML = `<img src="${img}" alt="${name}" class="w-full h-auto max-h-48 md:max-h-64 object-cover rounded" />`;
     selectors.detailPrice.textContent = currency(price);
     selectors.detailAdd.dataset.id = id;
     selectors.detailAdd.dataset.name = name;

@@ -62,10 +62,7 @@
           <div class="flex items-center justify-center mb-10 mt-3">
             <h2 class="text-3xl font-bold">Choose Your Trees</h2>
           </div>
-
-          <div
-            class="max-w-full mx-auto px-10 pl-[90px] grid lg:grid-cols-5 gap-6"
-          >
+          <div class="max-w-full mx-auto px-4 lg:px-8 xl:px-16 grid lg:grid-cols-5 gap-6">
             <aside class="lg:col-span-1">
               <div class="card p-3">
                 <h3 class="font-bold mb-3">Categories</h3>
@@ -96,7 +93,7 @@
               </div>
             </div>
 
-            <aside class=" lg:col-span-1 pr-[90px]">
+            <aside class="lg:col-span-1">
               <div class="card p-3 bg-[#ffffff] shadow">
                 <h4 class="text-xl font-bold mb-3">Your Cart</h4>
                 <div
@@ -110,7 +107,7 @@
                   <div class="font-bold">Total:</div>
                   <div id="cartTotal" class="font-bold text-lg">৳0</div>
                 </div>
-                <button id="checkoutBtn" class="btn btn-primary bg-[#006106] hover:bg-[#004d05] text-white px-[20px] py-[12px] h-[43px]  mt-3">
+                <button id="checkoutBtn" class="btn btn-primary bg-[#006106] hover:bg-[#004d05] text-white px-[20px] py-[12px] h-[43px] mt-3">
                   Checkout
                 </button>
               </div>
@@ -238,22 +235,23 @@
         </div>
       </div>
 
-      <!-- Detail Modal -->
       <div id="detailModal" class="modal">
-  <div class="modal-box max-w-3xl">
-    <h3 id="detailTitle" class="font-bold text-lg text-[#000000]"></h3>
-    <p id="detailDesc" class="py-4 text-sm text-muted"></p>
-    <div id="detailImage" class="mb-4"></div>
-    <div class="flex justify-between items-center mb-4">
-      <span class="font-bold text-lg text-[#000000]">Price:</span>
-      <span id="detailPrice" class="font-bold text-lg text-green-700"></span>
-    </div>
-    <div class="modal-action">
-      <button id="detailClose" class="btn">Close</button>
-      <button id="detailAdd" class="btn btn-primary">Add to Cart</button>
-    </div>
-  </div>
-</div>
+        <div class="modal-box max-w-3xl">
+          <h3 id="detailTitle" class="font-bold text-lg"></h3>
+          <h4 id="detailType" class="text-sm text-gray-600 mb-2"></h4>
+          <p id="detailCategory" class="text-xs text-muted mb-4"></p>
+          <p id="detailDesc" class="py-4 text-sm text-muted"></p>
+          <div id="detailImage" class="mb-4"></div>
+          <div class="flex justify-between items-center mb-4">
+            <span class="font-bold text-lg">Price:</span>
+            <span id="detailPrice" class="font-bold text-lg text-green-700"></span>
+          </div>
+          <div class="modal-action">
+            <button id="detailClose" class="btn">Close</button>
+            <button id="detailAdd" class="btn btn-primary">Add to Cart</button>
+          </div>
+        </div>
+      </div>
     </div>
     
     <script src="https://cdn.tailwindcss.com"></script>
